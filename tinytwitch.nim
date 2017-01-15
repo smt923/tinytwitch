@@ -7,12 +7,10 @@ const
 
 # add a hash to the channel name if there isn't one there already
 proc addHash(s: string): string =
-  var str = s
   if s.startsWith('#'):
-    return str
+    return s
   else:
-    str = "#"&str
-    return str
+    return "#"&s
 
 # anonymous account generation (justinfan + 14 random numbers)
 proc randomTwitchUser(): string=

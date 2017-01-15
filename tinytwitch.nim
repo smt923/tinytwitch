@@ -5,12 +5,6 @@ const
   CHAT_URL = "irc.chat.twitch.tv"
   CHAT_PORT = Port(6667)
 
-# helper function to clean up some (messier than this) code
-proc colorPrint(s: string, c: ForegroundColor): void =
-  setForegroundColor(c)
-  echo(s)
-  setForegroundColor(fgWhite)
-
 # add a hash to the channel name if there isn't one there already
 proc addHash(s: string): string =
   var str = s
@@ -50,27 +44,28 @@ t.send("CAP REQ :twitch.tv/membership", false)
 while true:
   var event: IrcEvent
   if t.poll(event):
-    curtime = "["&getClockStr()&"] "
+    curtime = "["&getClockStr()&"]"
     case event.typ
-    of EvConnected: echo(curtime & "- [INFO] Connected to server")
+    of EvConnected:
+      styledWriteLine(stdout, fgWhite, "$1 - [INFO] Connected to server" % [curtime])
     of EvDisconnected:
-      colorPrint(curtime & "- [ERR] Timeout, reconnecting...", fgRed)
+      styledWriteLine(stdout, fgRed, "$1 - [ERR] Disconnected, reconnecting..." % [curtime])
       t.reconnect()
     of EvTimeout:
-      colorPrint(curtime & "- [ERR] Timeout, reconnecting...", fgRed)
+      styledWriteLine(stdout, fgRed, "$1 - [ERR] Timeout, reconnecting..." % [curtime])
       t.reconnect()
     of EvMsg:
       case event.cmd 
         of MPrivMsg: 
-          colorPrint(curtime & event.origin & " - [MSG] " & event.nick & ": " & event.params[1], fgWhite)
+          styledWriteLine(stdout, fgWhite, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])
         of MJoin:
-          colorPrint(curtime & event.origin & " - [JOIN] " & event.nick, fgYellow)
+          styledWriteLine(stdout, fgYellow, "$1 $2 - [JOIN] $3" % [curtime, event.origin, event.nick])
         of MPart:
-          colorPrint(curtime & event.origin & " - [PART] " & event.nick, fgYellow)
+          styledWriteLine(stdout, fgYellow, "$1 $2 - [PART] $3" % [curtime, event.origin, event.nick])
         of MMode:
           if event.params[1] == "+o":
-            colorPrint(curtime & event.origin & " - [+MOD] " & event.params[2], fgCyan)
+            styledWriteLine(stdout, fgCyan, "$1 $2 - [+MOD] $3" % [curtime, event.origin, event.params[2]])
           elif event.params[1] == "-o":
-            colorPrint(curtime & event.origin & " - [-MOD] " & event.params[2], fgCyan)
+            styledWriteLine(stdout, fgCyan, "$1 $2 - [-MOD] $3" % [curtime, event.origin, event.params[2]])
         else:
           discard

@@ -35,3 +35,4 @@ should install the program, or it can be built simply with
 ```
 $ nim c -d:release tinytwitch.nim
 ```
+though you will need to install the [irc module](https://github.com/nim-lang/irc) if you don't use nimble to automatically get the dependency

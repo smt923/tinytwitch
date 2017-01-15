@@ -10,4 +10,4 @@ skipExt       = @["nim"]
 # Dependencies
 
 requires "nim >= 0.16.0"
-requires "irc"
+requires "irc = 0.1.0"

@@ -1,5 +1,4 @@
-import
-  irc, times, terminal, random, strutils, os
+import irc, times, terminal, random, strutils, os
 from rawsockets import Port
 
 const

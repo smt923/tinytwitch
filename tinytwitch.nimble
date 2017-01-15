@@ -5,6 +5,7 @@ author        = "smt"
 description   = "Very simple, very lightweight Twitch.tv chat viewer"
 license       = "MIT"
 bin           = @["tinytwitch"]
+skipExt       = @["nim"]
 
 # Dependencies
 

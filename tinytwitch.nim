@@ -23,12 +23,12 @@ proc randomTwitchUser(): string=
 var chans = newSeq[string](0)
 var highlights = newSeq[string](0)
 if paramCount() == 0:
-  echo("Type the usernames of the channels to join, seperated by a space: ")
+  echo("Type the usernames of the channels to join, seperated by spaces: ")
   var channelin: string = readLine(stdin)
   for chan in splitWhitespace(channelin): 
     chans.add(addHash(chan))
 
-  echo("Type the phrases you wish to highlight (or just press enter for none)")
+  echo("Type the words you wish to highlight, seperated by spaces (or just press enter for none): ")
   var highlightin: string = readLine(stdin)
   if not highlightin.isNilOrWhitespace(): 
     for hl in splitWhitespace(highlightin):
@@ -37,6 +37,7 @@ elif paramCount() >= 1:
   for param in commandLineParams():
     chans.add(addHash(param))
 
+var shouldHighlight = false
 var username = randomTwitchUser()
 var t = irc.newIrc(CHAT_URL, CHAT_PORT , username, username,
                     joinChans = chans)
@@ -46,7 +47,6 @@ t.connect()
 # this gives us things such as userlist, joins, parts and mod status:
 t.send("CAP REQ :twitch.tv/membership", false) 
 
-var shouldHighlight = false
 while true:
   var event: IrcEvent
   if t.poll(event):

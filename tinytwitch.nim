@@ -4,7 +4,6 @@ from rawsockets import Port
 const
   CHAT_URL = "irc.chat.twitch.tv"
   CHAT_PORT = Port(6667)
-  #HIGHLIGHT = "smt"
 
 # add a hash to the channel name if there isn't one there already
 proc addHash(s: string): string =

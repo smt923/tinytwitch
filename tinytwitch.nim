@@ -4,6 +4,7 @@ from rawsockets import Port
 const
   CHAT_URL = "irc.chat.twitch.tv"
   CHAT_PORT = Port(6667)
+  #HIGHLIGHT = "smt"
 
 # add a hash to the channel name if there isn't one there already
 proc addHash(s: string): string =
@@ -21,15 +22,23 @@ proc randomTwitchUser(): string=
   return name 
 
 var chans = newSeq[string](0)
+var highlights = newSeq[string](0)
 if paramCount() == 0:
   echo("Type the usernames of the channels to join, seperated by a space: ")
-  var channel: string = readLine(stdin)
-  for chan in splitWhitespace(channel): 
+  var channelin: string = readLine(stdin)
+  for chan in splitWhitespace(channelin): 
     chans.add(addHash(chan))
+
+  echo("Type the phrases you wish to highlight (or just press enter for none)")
+  var highlightin: string = readLine(stdin)
+  if not highlightin.isNilOrWhitespace(): 
+    for hl in splitWhitespace(highlightin):
+      highlights.add(hl)
 elif paramCount() >= 1:
   for param in commandLineParams():
     chans.add(addHash(param))
 
+echo highlights
 var username = randomTwitchUser()
 var t = irc.newIrc(CHAT_URL, CHAT_PORT , username, username,
                     joinChans = chans)
@@ -39,6 +48,7 @@ t.connect()
 # this gives us things such as userlist, joins, parts and mod status:
 t.send("CAP REQ :twitch.tv/membership", false) 
 
+var shouldHighlight = false
 while true:
   var event: IrcEvent
   if t.poll(event):
@@ -55,11 +65,22 @@ while true:
     of EvMsg:
       case event.cmd 
         of MPrivMsg: 
-          styledWriteLine(stdout, fgWhite, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])
+          #TODO: almost certainly a better way to do this:
+          for i in highlights:
+            if event.params[1].contains(i):
+              shouldHighlight = true
+              break
+            else:
+              shouldHighlight = false
+              continue
+          if shouldHighlight:
+            styledWriteLine(stdout, fgWhite, bgRed, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])              
+          else:
+            styledWriteLine(stdout, fgWhite, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])
         of MJoin:
-          styledWriteLine(stdout, fgYellow, "$1 $2 - [JOIN] $3" % [curtime, event.origin, event.nick])
+          styledWriteLine(stdout, fgGreen, "$1 $2 - [JOIN] $3" % [curtime, event.origin, event.nick])
         of MPart:
-          styledWriteLine(stdout, fgYellow, "$1 $2 - [PART] $3" % [curtime, event.origin, event.nick])
+          styledWriteLine(stdout, fgRed, "$1 $2 - [PART] $3" % [curtime, event.origin, event.nick])
         of MMode:
           if event.params[1] == "+o":
             styledWriteLine(stdout, fgCyan, "$1 $2 - [+MOD] $3" % [curtime, event.origin, event.params[2]])

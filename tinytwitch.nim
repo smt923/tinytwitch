@@ -38,7 +38,6 @@ elif paramCount() >= 1:
   for param in commandLineParams():
     chans.add(addHash(param))
 
-echo highlights
 var username = randomTwitchUser()
 var t = irc.newIrc(CHAT_URL, CHAT_PORT , username, username,
                     joinChans = chans)

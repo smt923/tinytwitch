@@ -6,6 +6,15 @@ This makes it much more lightweight than using a browser and much more simple th
 
 If you're just looking for the downloads, [click here](https://github.com/smt923/tinytwitch/releases) 
 
+The current supported features are:
+
+* Allows joining multiple channels (can look messy)
+* Optional "highlights" (as you don't login it might be worth highlighting your username)
+* Shows users joining and leaving a chat
+* Shows mod gain and loss messages (mostly when mods join)
+* [S]ubscriber and [M]oderator badges
+* New subs and resubs with months, both with their message
+
 ![tinytwitch](http://i.imgur.com/t6B0Syj.png)
 
 ## Usage

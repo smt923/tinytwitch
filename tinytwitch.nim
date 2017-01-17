@@ -26,12 +26,22 @@ proc addHash(s: string): string =
     return "#"&s
 
 # anonymous account generation (justinfan + 14 random numbers)
-proc randomTwitchUser(): string=
+proc randomTwitchUser(): string =
   random.randomize(epochTime().int)
   var name = "justinfan"
   for i in 0..13:
       name &= strutils.intToStr(random.random(9))
   return name 
+
+# add ascii versions of twitch badges such as subscriber and moderator
+proc addTwitchBadges(s: string, e: IrcEvent): string =
+  result = s
+  if e.tags.len() >= 12:
+    if e.tags["subscriber"] == "1":
+      result &= "[S]"
+    if e.tags["mod"] == "1":
+      result &= "[M]"
+  result &= " "&e.nick
 
 system.addQuitProc(resetAttributes)
 var chans = newSeq[string](0)
@@ -40,16 +50,17 @@ if paramCount() == 0:
   echo("Type the usernames of the channels to join, seperated by spaces: ")
   var channelin: string = readLine(stdin)
   for chan in splitWhitespace(channelin): 
-    chans.add(addHash(chan))
+    chans.add(addHash(chan.toLowerAscii()))
 
-  echo("Type the words you wish to highlight, seperated by spaces (or just press enter for none): ")
-  var highlightin: string = readLine(stdin)
-  if not highlightin.isNilOrWhitespace(): 
-    for hl in splitWhitespace(highlightin):
-      highlights.add(hl)
 elif paramCount() >= 1:
   for param in commandLineParams():
-    chans.add(addHash(param))
+    chans.add(addHash(param.toLowerAscii()))
+
+echo("Type the words you wish to highlight, seperated by spaces (or just press enter for none): ")
+var highlightin: string = readLine(stdin)
+if not highlightin.isNilOrWhitespace(): 
+  for hl in splitWhitespace(highlightin):
+    highlights.add(hl)
 
 var username = randomTwitchUser()
 var t = irc.newIrc(CHAT_URL, CHAT_PORT , username, username,
@@ -76,12 +87,14 @@ while true:
     of EvMsg:
       case event.cmd 
         of MPrivMsg:
+          var username = ""
+          username = username.addTwitchBadges(event).strip()
           if event.user == "twitchnotify":
             styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3" % [curtime, event.origin, event.params[1]])        
           elif event.params[1].hasTextInSet(highlights):
-            styledWriteLine(stdout, fgWhite, bgRed, styleBright, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])              
+            styledWriteLine(stdout, fgWhite, bgRed, styleBright, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, username, event.params[1]])              
           else:
-            styledWriteLine(stdout, fgWhite, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])
+            styledWriteLine(stdout, fgWhite, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, username, event.params[1]])
         of MJoin:
           styledWriteLine(stdout, fgGreen, "$1 $2 - [JOIN] $3" % [curtime, event.origin, event.nick])
         of MPart:

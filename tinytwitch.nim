@@ -1,9 +1,22 @@
-import irc, times, terminal, random, strutils, os
+import irc, times, terminal, random, strutils, strtabs, os
 from rawsockets import Port
 
 const
   CHAT_URL = "irc.chat.twitch.tv"
   CHAT_PORT = Port(6667)
+
+# check if a string contains some text that can be found in a set
+# there's probably a cleaner/smarter way to do this, will update at some point
+proc hasTextInSet(str: string, s: seq): bool =
+  var bHighlight = false
+  for i in s:
+    if str.contains(i):
+      bHighlight = true
+      break
+    else:
+      bHighlight = false
+      continue
+  return bHighlight
 
 # add a hash to the channel name if there isn't one there already
 proc addHash(s: string): string =
@@ -20,6 +33,7 @@ proc randomTwitchUser(): string=
       name &= strutils.intToStr(random.random(9))
   return name 
 
+system.addQuitProc(resetAttributes)
 var chans = newSeq[string](0)
 var highlights = newSeq[string](0)
 if paramCount() == 0:
@@ -37,7 +51,6 @@ elif paramCount() >= 1:
   for param in commandLineParams():
     chans.add(addHash(param))
 
-var shouldHighlight = false
 var username = randomTwitchUser()
 var t = irc.newIrc(CHAT_URL, CHAT_PORT , username, username,
                     joinChans = chans)
@@ -45,7 +58,7 @@ var curtime: string
 
 t.connect()
 # this gives us things such as userlist, joins, parts and mod status:
-t.send("CAP REQ :twitch.tv/membership", false) 
+t.send("CAP REQ :twitch.tv/membership twitch.tv/commands twitch.tv/tags", false) 
 
 while true:
   var event: IrcEvent
@@ -62,17 +75,11 @@ while true:
       t.reconnect()
     of EvMsg:
       case event.cmd 
-        of MPrivMsg: 
-          #TODO: almost certainly a better way to do this:
-          for i in highlights:
-            if event.params[1].contains(i):
-              shouldHighlight = true
-              break
-            else:
-              shouldHighlight = false
-              continue
-          if shouldHighlight:
-            styledWriteLine(stdout, fgWhite, bgRed, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])              
+        of MPrivMsg:
+          if event.user == "twitchnotify":
+            styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3" % [curtime, event.origin, event.params[1]])        
+          elif event.params[1].hasTextInSet(highlights):
+            styledWriteLine(stdout, fgWhite, bgRed, styleBright, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])              
           else:
             styledWriteLine(stdout, fgWhite, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, event.nick, event.params[1]])
         of MJoin:
@@ -84,5 +91,23 @@ while true:
             styledWriteLine(stdout, fgCyan, "$1 $2 - [+MOD] $3" % [curtime, event.origin, event.params[2]])
           elif event.params[1] == "-o":
             styledWriteLine(stdout, fgCyan, "$1 $2 - [-MOD] $3" % [curtime, event.origin, event.params[2]])
+        of MUnknown:
+          if event.raw.contains(" CLEARCHAT "):
+            styledWriteLine(stdout, fgWhite, "$1 $2 - [INFO] $3 was timed out for $4 seconds" % [curtime, event.origin, event.params[1], event.tags["ban-duration"]])
+          elif event.raw.contains(" USERNOTICE "):
+            var submsgs = event.tags["system-msg"]
+            var submsg  = ""
+            if submsgs.contains(".") and event.params.len() <= 1:
+              submsg = submsgs.split(".")[1].replace(r"\s", " ").strip()
+              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3" % [curtime, event.origin, submsg])
+            elif submsgs.contains(".") and event.params.len() >= 2:
+              submsg = submsgs.split(".")[1].replace(r"\s", " ").strip()
+              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3 - $4" % [curtime, event.origin, submsg, event.params[1]])
+            elif event.params.len() <= 1:
+              submsg = submsgs.replace(r"\s", " ").strip()
+              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3" % [curtime, event.origin, submsg])
+            else:
+              submsg = submsgs.replace(r"\s", " ").strip()
+              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3 - $4" % [curtime, event.origin, submsg, event.params[1]])              
         else:
           discard

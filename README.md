@@ -1,6 +1,6 @@
 # tinytwitch
 tinytwitch is a twitch chat viewer with not many features (no emotes, you can only view chat, etc) but a very small footprint
-([less than 1.5mb ram and 0.02 cpu usage when connected to the current top 10 streamer's chats](http://i.imgur.com/frpVkMO.png))
+([under 2mb ram and around 0.02 average cpu usage when connected to the current top 10 streamer's chats](http://i.imgur.com/frpVkMO.png))
 
 This makes it much more lightweight than using a browser and much more simple than using a full IRC client just for twitch
 

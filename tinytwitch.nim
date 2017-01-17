@@ -5,6 +5,8 @@ const
   CHAT_URL = "irc.chat.twitch.tv"
   CHAT_PORT = Port(6667)
 
+var
+  shouldLog = false
 # check if a string contains some text that can be found in a set
 # there's probably a cleaner/smarter way to do this, will update at some point
 proc hasTextInSet(str: string, s: seq): bool =
@@ -43,7 +45,10 @@ proc addTwitchBadges(s: string, e: IrcEvent): string =
       result &= "[M]"
   result &= " "&e.nick
 
-system.addQuitProc(resetAttributes)
+proc logToFile(f: File, s: string) =
+  if shouldLog:
+    f.writeLine(s)
+
 var chans = newSeq[string](0)
 var highlights = newSeq[string](0)
 if paramCount() == 0:
@@ -62,6 +67,11 @@ if not highlightin.isNilOrWhitespace():
   for hl in splitWhitespace(highlightin):
     highlights.add(hl)
 
+echo("Do you want to log the chat to a file? (y = yes, just press enter for no)")
+var loggingin: string = readLine(stdin)
+if loggingin.contains("y") or loggingin.contains("yes"):
+  shouldLog = true
+
 var username = randomTwitchUser()
 var t = irc.newIrc(CHAT_URL, CHAT_PORT , username, username,
                     joinChans = chans)
@@ -71,18 +81,35 @@ t.connect()
 # this gives us things such as userlist, joins, parts and mod status:
 t.send("CAP REQ :twitch.tv/membership twitch.tv/commands twitch.tv/tags", false) 
 
+var chatline = ""
+var filename = getDateStr()&"_twitchchat_log.txt"
+var f: File 
+if shouldLog:
+  if f.open(filename):
+    discard f.open(filename, fmAppend)
+  else:
+    discard f.open(filename, fmReadWrite)
+
+system.addQuitProc(resetAttributes)
+
 while true:
   var event: IrcEvent
   if t.poll(event):
     curtime = "["&getClockStr()&"]"
     case event.typ
     of EvConnected:
-      styledWriteLine(stdout, fgWhite, "$1 - [INFO] Connected to server" % [curtime])
+      chatline = "$1 - [INFO] Connected to server" % [curtime]
+      styledWriteLine(stdout, fgWhite, chatline)
+      f.logToFile(chatline)
     of EvDisconnected:
-      styledWriteLine(stdout, fgRed, "$1 - [ERR] Disconnected, reconnecting..." % [curtime])
+      chatline = "$1 - [ERR] Disconnected, reconnecting..." % [curtime]
+      styledWriteLine(stdout, fgRed, chatline)
+      f.logToFile(chatline)
       t.reconnect()
     of EvTimeout:
-      styledWriteLine(stdout, fgRed, "$1 - [ERR] Timeout, reconnecting..." % [curtime])
+      chatline = "$1 - [ERR] Timeout, reconnecting..." % [curtime]
+      styledWriteLine(stdout, fgRed, chatline)
+      f.logToFile(chatline)
       t.reconnect()
     of EvMsg:
       case event.cmd 
@@ -90,37 +117,63 @@ while true:
           var username = ""
           username = username.addTwitchBadges(event).strip()
           if event.user == "twitchnotify":
-            styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3" % [curtime, event.origin, event.params[1]])        
+            chatline = "$1 $2 - [SUB] $3" % [curtime, event.origin, event.params[1]]
+            styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, chatline)
+            f.logToFile(chatline)      
           elif event.params[1].hasTextInSet(highlights):
-            styledWriteLine(stdout, fgWhite, bgRed, styleBright, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, username, event.params[1]])              
+            chatline = "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, username, event.params[1]]
+            styledWriteLine(stdout, fgWhite, bgRed, styleBright, chatline)
+            f.logToFile(chatline)              
           else:
-            styledWriteLine(stdout, fgWhite, "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, username, event.params[1]])
+            chatline = "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, username, event.params[1]]
+            styledWriteLine(stdout, fgWhite, chatline)
+            f.logToFile(chatline)
         of MJoin:
-          styledWriteLine(stdout, fgGreen, "$1 $2 - [JOIN] $3" % [curtime, event.origin, event.nick])
+          chatline = "$1 $2 - [JOIN] $3" % [curtime, event.origin, event.nick]
+          styledWriteLine(stdout, fgGreen, chatline)
+          f.logToFile(chatline)
         of MPart:
-          styledWriteLine(stdout, fgRed, "$1 $2 - [PART] $3" % [curtime, event.origin, event.nick])
+          chatline = "$1 $2 - [PART] $3" % [curtime, event.origin, event.nick]
+          styledWriteLine(stdout, fgRed, chatline)
+          f.logToFile(chatline)
         of MMode:
           if event.params[1] == "+o":
-            styledWriteLine(stdout, fgCyan, "$1 $2 - [+MOD] $3" % [curtime, event.origin, event.params[2]])
+            chatline = "$1 $2 - [+MOD] $3" % [curtime, event.origin, event.params[2]]
+            styledWriteLine(stdout, fgCyan, chatline)
+            f.logToFile(chatline)
           elif event.params[1] == "-o":
-            styledWriteLine(stdout, fgCyan, "$1 $2 - [-MOD] $3" % [curtime, event.origin, event.params[2]])
+            chatline = "$1 $2 - [-MOD] $3" % [curtime, event.origin, event.params[2]]
+            styledWriteLine(stdout, fgCyan, chatline)
+            f.logToFile(chatline)
         of MUnknown:
           if event.raw.contains(" CLEARCHAT "):
-            styledWriteLine(stdout, fgWhite, "$1 $2 - [INFO] $3 was timed out for $4 seconds" % [curtime, event.origin, event.params[1], event.tags["ban-duration"]])
+            chatline = "$1 $2 - [INFO] $3 was timed out for $4 seconds" % [curtime, event.origin, event.params[1], event.tags["ban-duration"]]
+            styledWriteLine(stdout, fgWhite, chatline)
+            f.logToFile(chatline)
           elif event.raw.contains(" USERNOTICE "):
             var submsgs = event.tags["system-msg"]
             var submsg  = ""
             if submsgs.contains(".") and event.params.len() <= 1:
               submsg = submsgs.split(".")[1].replace(r"\s", " ").strip()
-              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3" % [curtime, event.origin, submsg])
+              chatline = "$1 $2 - [SUB] $3" % [curtime, event.origin, submsg]
+              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, chatline)
+              f.logToFile(chatline)
             elif submsgs.contains(".") and event.params.len() >= 2:
               submsg = submsgs.split(".")[1].replace(r"\s", " ").strip()
-              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3 - $4" % [curtime, event.origin, submsg, event.params[1]])
+              chatline = "$1 $2 - [SUB] $3 - $4" % [curtime, event.origin, submsg, event.params[1]]
+              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, chatline)
+              f.logToFile(chatline)
             elif event.params.len() <= 1:
               submsg = submsgs.replace(r"\s", " ").strip()
-              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3" % [curtime, event.origin, submsg])
+              chatline = "$1 $2 - [SUB] $3" % [curtime, event.origin, submsg]
+              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, chatline)
+              f.logToFile(chatline)
             else:
               submsg = submsgs.replace(r"\s", " ").strip()
-              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, "$1 $2 - [SUB] $3 - $4" % [curtime, event.origin, submsg, event.params[1]])              
+              chatline = "$1 $2 - [SUB] $3 - $4" % [curtime, event.origin, submsg, event.params[1]]
+              styledWriteLine(stdout, fgWhite, bgMagenta, styleBright, chatline) 
+              f.logToFile(chatline)             
         else:
           discard
+
+f.close()

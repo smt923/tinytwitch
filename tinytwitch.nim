@@ -101,16 +101,19 @@ while true:
       chatline = "$1 - [INFO] Connected to server" % [curtime]
       styledWriteLine(stdout, fgWhite, chatline)
       f.logToFile(chatline)
+
     of EvDisconnected:
       chatline = "$1 - [ERR] Disconnected, reconnecting..." % [curtime]
       styledWriteLine(stdout, fgRed, chatline)
       f.logToFile(chatline)
       t.reconnect()
+
     of EvTimeout:
       chatline = "$1 - [ERR] Timeout, reconnecting..." % [curtime]
       styledWriteLine(stdout, fgRed, chatline)
       f.logToFile(chatline)
       t.reconnect()
+
     of EvMsg:
       case event.cmd 
         of MPrivMsg:
@@ -128,14 +131,31 @@ while true:
             chatline = "$1 $2 - [MSG] $3: $4" % [curtime, event.origin, username, event.params[1]]
             styledWriteLine(stdout, fgWhite, chatline)
             f.logToFile(chatline)
+
         of MJoin:
+          # silly hack, saves text roughly every 30s
+          if shouldLog:
+            f.close()
+            if f.open(filename):
+              discard f.open(filename, fmAppend)
+            else:
+              discard f.open(filename, fmReadWrite)
           chatline = "$1 $2 - [JOIN] $3" % [curtime, event.origin, event.nick]
           styledWriteLine(stdout, fgGreen, chatline)
           f.logToFile(chatline)
+
         of MPart:
+          # silly hack, saves text roughly every 30s
+          if shouldLog:
+            f.close()
+            if f.open(filename):
+              discard f.open(filename, fmAppend)
+            else:
+              discard f.open(filename, fmReadWrite)
           chatline = "$1 $2 - [PART] $3" % [curtime, event.origin, event.nick]
           styledWriteLine(stdout, fgRed, chatline)
           f.logToFile(chatline)
+
         of MMode:
           if event.params[1] == "+o":
             chatline = "$1 $2 - [+MOD] $3" % [curtime, event.origin, event.params[2]]
@@ -145,6 +165,7 @@ while true:
             chatline = "$1 $2 - [-MOD] $3" % [curtime, event.origin, event.params[2]]
             styledWriteLine(stdout, fgCyan, chatline)
             f.logToFile(chatline)
+            
         of MUnknown:
           if event.raw.contains(" CLEARCHAT "):
             chatline = "$1 $2 - [INFO] $3 was timed out for $4 seconds" % [curtime, event.origin, event.params[1], event.tags["ban-duration"]]

@@ -46,6 +46,7 @@ proc addTwitchBadges(s: string, e: IrcEvent): string =
       result &= "[M]"
   result &= " "&e.nick
 
+# small wrapper for cleaner code, writes file and flushes every X lines
 proc logToFile(f: File, s: string) =
   if shouldLog:
     f.writeLine(s)

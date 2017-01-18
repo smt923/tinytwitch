@@ -10,10 +10,11 @@ The current supported features are:
 
 * Allows joining multiple channels (can look messy)
 * Optional "highlights" (as you don't login it might be worth highlighting your username)
+* Optional logging to file in same directory
 * Shows users joining and leaving a chat
 * Shows mod gain and loss messages (mostly when mods join)
 * [S]ubscriber and [M]oderator badges
-* New subs and resubs with months, both with their message
+* New subs and resubs notifications with number of months, both with their message
 
 ![tinytwitch](http://i.imgur.com/t6B0Syj.png)
 

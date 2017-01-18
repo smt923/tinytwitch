@@ -7,6 +7,7 @@ const
 
 var
   shouldLog = false
+  linecounter = 0
 # check if a string contains some text that can be found in a set
 # there's probably a cleaner/smarter way to do this, will update at some point
 proc hasTextInSet(str: string, s: seq): bool =
@@ -48,6 +49,10 @@ proc addTwitchBadges(s: string, e: IrcEvent): string =
 proc logToFile(f: File, s: string) =
   if shouldLog:
     f.writeLine(s)
+    linecounter += 1
+    if linecounter >= 10:
+      f.flushFile()
+      linecounter = 0
 
 var chans = newSeq[string](0)
 var highlights = newSeq[string](0)
@@ -90,7 +95,7 @@ if shouldLog:
   else:
     discard f.open(filename, fmReadWrite)
 
-system.addQuitProc(resetAttributes)
+addQuitProc(resetAttributes)
 
 while true:
   var event: IrcEvent
@@ -133,25 +138,11 @@ while true:
             f.logToFile(chatline)
 
         of MJoin:
-          # silly hack, saves text roughly every 30s
-          if shouldLog:
-            f.close()
-            if f.open(filename):
-              discard f.open(filename, fmAppend)
-            else:
-              discard f.open(filename, fmReadWrite)
           chatline = "$1 $2 - [JOIN] $3" % [curtime, event.origin, event.nick]
           styledWriteLine(stdout, fgGreen, chatline)
           f.logToFile(chatline)
 
         of MPart:
-          # silly hack, saves text roughly every 30s
-          if shouldLog:
-            f.close()
-            if f.open(filename):
-              discard f.open(filename, fmAppend)
-            else:
-              discard f.open(filename, fmReadWrite)
           chatline = "$1 $2 - [PART] $3" % [curtime, event.origin, event.nick]
           styledWriteLine(stdout, fgRed, chatline)
           f.logToFile(chatline)

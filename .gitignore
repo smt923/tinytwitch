@@ -4,6 +4,7 @@
 ## Custom
 *.zip
 *log.txt
+builds/
 
 ### Nim ###
 nimcache/

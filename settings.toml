@@ -1,0 +1,34 @@
+# Channels format should be like this: ["channel", "channel2", "channel3"] or
+# just ["channel"] for a single entry
+#
+# Set use_config_channels to true to use the channels from the config, or false to
+# ask you for channels every time
+#
+# Highlights are added in the same format as channels, it colors a message in red
+# if it contains one of your highlight phrases (a good example is your username)
+# you can have [""] for none
+#
+# Logging enables logging the chat to a text file (true for on, false for off)
+#
+# log_save_lines is the number of lines before the log file is saved
+
+[general]
+channels = ["change_me"]
+use_config_channels = false
+highlights = [""]
+logging = false
+log_save_lines = 10
+
+# Available text colors are:
+# white black red green yellow blue magenta cyan
+#
+# Highlight and sub colors are for the message background
+
+[colors]
+chat = "white"
+highlight = "red"
+error = "red"
+join = "green"
+part = "red"
+modstatus = "cyan"
+subnotice = "magenta"

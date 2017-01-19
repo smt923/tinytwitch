@@ -91,7 +91,7 @@ proc logToFile(f: File, s: string) =
   if shouldLog:
     f.writeLine(s)
     linecounter += 1
-    if linecounter >= config.getInt("log_save_lines"):
+    if linecounter >= config.getInt("general.log_save_lines"):
       f.flushFile()
       linecounter = 0
 

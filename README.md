@@ -11,6 +11,7 @@ The current supported features are:
 * Allows joining multiple channels (can look messy)
 * Optional "highlights" (as you don't login it might be worth highlighting your username)
 * Optional logging to file in same directory
+* Settings file to set up default settings as well as colors
 * Shows users joining and leaving a chat
 * Shows mod gain and loss messages (mostly when mods join)
 * [S]ubscriber and [M]oderator badges

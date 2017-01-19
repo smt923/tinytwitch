@@ -4,6 +4,7 @@ version       = "0.1.0"
 author        = "smt"
 description   = "Very simple, very lightweight Twitch.tv chat viewer"
 license       = "MIT"
+srcDir        = "src"
 bin           = @["tinytwitch"]
 skipExt       = @["nim"]
 

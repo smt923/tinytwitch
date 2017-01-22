@@ -11,18 +11,25 @@
 # Logging enables logging the chat to a text file (true for on, false for off)
 #
 # log_save_lines is the number of lines before the log file is saved
+#
+# hide_single_channel to 'true' will hide the channel name if connected to just one channel
 
 [general]
 channels = ["change_me"]
 use_config_channels = false
 highlights = [""]
-logging = false
-log_save_lines = 10
+
+logging = true
+log_save_lines = 5
+
+sub_badge = true
+mod_badge = true
+hide_single_channel = false
 
 # Available text colors are:
 # white black red green yellow blue magenta cyan
 #
-# Highlight and sub colors are for the message background
+# 'Highlight' and 'sub colors' are for the message background
 
 [colors]
 chat = "white"

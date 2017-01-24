@@ -20,17 +20,13 @@ The current supported features are:
 ![tinytwitch](http://i.imgur.com/t6B0Syj.png)
 
 ## Usage
-Either run the program with the streamer's chatrooms as arguments:
-```
-tinytwitch.exe bobross summit1g lirik
-```
-Or run the program and it will prompt you to enter streamers in the same format:
+Simply run the program and it will prompt you to enter a space seperated list of channels:
 ```
 $ tinytwitch.exe
 Type the usernames of the channels to join, seperated by a space:
 bobross summit1g lirik
 ``` 
-You can of course just enter a single channel
+You can of course just enter a single channel. There is also the included configuration file (settings.toml) that allows you to set up some defaults.
 
 ## What is it for?
 This was mostly made for fun and to test the awesome language it's made in, [Nim](http://nim-lang.org/). You'll probably immediately know if you have use for this or not, if you don't feel like

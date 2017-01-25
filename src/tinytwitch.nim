@@ -135,7 +135,7 @@ if config.getBool("general.logging") == true:
 else:
   shouldLog = false
 
-var username = randomTwitchUser()
+let username = randomTwitchUser()
 var t = irc.newIrc(CHAT_URL, CHAT_PORT , username, username,
                     joinChans = chans)
 
@@ -155,7 +155,7 @@ if shouldLog:
 
 addQuitProc(resetAttributes)
 
-styledWriteLine(stdout, chatColor.chat, "[$1] Connecting to: $2" % [getClockStr(), $config.getStringArray("general.channels")])
+styledWriteLine(stdout, chatColor.chat, "[$1] Connecting to: $2" % [getClockStr(), $chans])
 
 while true:
   var event: IrcEvent
@@ -255,5 +255,5 @@ while true:
               f.logToFile(chatline)             
         else:
           discard
-
+ 
 f.close()

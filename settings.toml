@@ -10,7 +10,9 @@
 #
 # Logging enables logging the chat to a text file (true for on, false for off)
 #
-# log_save_lines is the number of lines before the log file is saved
+# log_save_lines is the number of lines before the log file is saved (usually this default is fine, a lower number will
+# cause the log to write to disk a lot but will have more lines saved in case of some sort of error or crash, although the
+# program will try to save any remaining lines when it is closed)
 #
 # hide_single_channel to 'true' will hide the channel name if connected to just one channel
 
